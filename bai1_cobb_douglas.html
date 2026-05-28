@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bài 1 – Hàm sản xuất Cobb-Douglas mở rộng | AIDEOM-VN</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  :root {
+    --bg: #f8f7f4;
+    --card: #ffffff;
+    --border: #e2dfd8;
+    --text: #1a1917;
+    --muted: #6b6863;
+    --accent: #185fa5;
+    --accent2: #0f6e56;
+    --accent3: #ba7517;
+    --accent4: #993c1d;
+    --red: #a32d2d;
+    --pill-bg: #e6f1fb;
+    --pill-text: #0c447c;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Georgia', serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 0;
+  }
+  header {
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    padding: 20px 40px;
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+  }
+  header h1 {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    color: var(--text);
+  }
+  header span {
+    font-size: 13px;
+    color: var(--muted);
+    font-family: 'Courier New', monospace;
+  }
+  .container { max-width: 1100px; margin: 0 auto; padding: 32px 40px; }
+
+  .formula-box {
+    background: #1a1917;
+    color: #f0ede8;
+    border-radius: 10px;
+    padding: 20px 28px;
+    margin-bottom: 28px;
+    font-family: 'Courier New', monospace;
+    font-size: 15px;
+    line-height: 2;
+  }
+  .formula-box .eq { color: #f0c27f; font-size: 16px; font-weight: bold; }
+  .formula-box .note { color: #8fa8c8; font-size: 12px; margin-top: 6px; }
+
+  .tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 2px solid var(--border);
+    margin-bottom: 28px;
+  }
+  .tab {
+    padding: 10px 22px;
+    font-size: 14px;
+    cursor: pointer;
+    border: none;
+    background: none;
+    color: var(--muted);
+    font-family: 'Georgia', serif;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    transition: all 0.15s;
+  }
+  .tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+    font-weight: 700;
+  }
+  .tab:hover:not(.active) { color: var(--text); }
+
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 24px; }
+  .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-bottom: 24px; }
+
+  .metric {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 18px;
+  }
+  .metric .label { font-size: 12px; color: var(--muted); margin-bottom: 4px; font-family: 'Courier New', monospace; }
+  .metric .value { font-size: 24px; font-weight: 700; color: var(--text); font-family: 'Georgia', serif; }
+  .metric .sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  .chart-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 22px;
+    margin-bottom: 20px;
+  }
+  .chart-card h3 { font-size: 14px; color: var(--text); margin-bottom: 4px; font-weight: 700; }
+  .chart-card .desc { font-size: 12px; color: var(--muted); margin-bottom: 16px; font-style: italic; }
+
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    background: var(--card);
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    margin-bottom: 20px;
+  }
+  .data-table th {
+    background: #f1ede6;
+    padding: 10px 14px;
+    text-align: right;
+    font-weight: 700;
+    font-size: 12px;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+    font-family: 'Courier New', monospace;
+  }
+  .data-table th:first-child { text-align: left; }
+  .data-table td {
+    padding: 9px 14px;
+    text-align: right;
+    border-bottom: 1px solid #f0ede8;
+    font-family: 'Courier New', monospace;
+  }
+  .data-table td:first-child { text-align: left; font-weight: 700; font-family: 'Georgia', serif; }
+  .data-table tr:last-child td { border-bottom: none; }
+  .data-table tr:hover td { background: #faf8f5; }
+
+  .slider-group { margin-bottom: 20px; }
+  .slider-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 16px;
+  }
+  .slider-label { font-size: 13px; min-width: 180px; color: var(--text); font-family: 'Courier New', monospace; }
+  .slider-row input[type=range] { flex: 1; }
+  .slider-val {
+    font-size: 14px;
+    font-weight: 700;
+    min-width: 60px;
+    text-align: right;
+    color: var(--accent);
+    font-family: 'Courier New', monospace;
+  }
+
+  .result-box {
+    background: #e6f1fb;
+    border: 1px solid #b5d4f4;
+    border-radius: 10px;
+    padding: 18px 22px;
+    margin-bottom: 20px;
+  }
+  .result-box .big { font-size: 32px; font-weight: 700; color: var(--accent); font-family: 'Georgia', serif; }
+  .result-box .context { font-size: 13px; color: #185fa5; margin-top: 4px; }
+
+  .badge {
+    display: inline-block;
+    background: var(--pill-bg);
+    color: var(--pill-text);
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-family: 'Courier New', monospace;
+    font-weight: 700;
+  }
+  .badge.green { background: #eaf3de; color: #3b6d11; }
+  .badge.amber { background: #faeeda; color: #854f0b; }
+  .badge.red { background: #fcebeb; color: #a32d2d; }
+
+  .policy-box {
+    background: #faeeda;
+    border-left: 3px solid #ef9f27;
+    border-radius: 0 8px 8px 0;
+    padding: 14px 18px;
+    margin-bottom: 12px;
+    font-size: 13px;
+    color: #412402;
+    line-height: 1.6;
+  }
+  .policy-box strong { font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #854f0b; display: block; margin-bottom: 4px; }
+
+  .section-title {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+    margin-bottom: 14px;
+    margin-top: 8px;
+  }
+
+  .growth-bar-wrap { margin-top: 8px; }
+  .growth-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    font-size: 12px;
+  }
+  .growth-label { min-width: 80px; color: var(--muted); font-family: 'Courier New', monospace; }
+  .growth-bar-bg { flex: 1; background: #f0ede8; border-radius: 4px; height: 14px; }
+  .growth-bar { height: 14px; border-radius: 4px; }
+  .growth-pct { min-width: 40px; text-align: right; font-weight: 700; font-family: 'Courier New', monospace; }
+
+  select {
+    padding: 6px 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 13px;
+    background: var(--card);
+    color: var(--text);
+    font-family: 'Georgia', serif;
+    cursor: pointer;
+  }
+
+  .scenario-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 16px; }
+  .scenario-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    font-size: 13px;
+  }
+  .scenario-card .sc-label { font-size: 11px; color: var(--muted); font-family: 'Courier New', monospace; margin-bottom: 2px; }
+  .scenario-card .sc-val { font-size: 18px; font-weight: 700; color: var(--text); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Bài 1 – Hàm sản xuất Cobb-Douglas mở rộng</h1>
+  <span>AIDEOM-VN · Việt Nam 2020–2025</span>
+</header>
+
+<div class="container">
+
+  <div class="formula-box">
+    <div class="eq">Y<sub>t</sub> = A<sub>t</sub> · K<sub>t</sub><sup>α</sup> · L<sub>t</sub><sup>β</sup> · D<sub>t</sub><sup>γ</sup> · AI<sub>t</sub><sup>δ</sup> · H<sub>t</sub><sup>θ</sup></div>
+    <div style="margin-top:6px; color:#c8d8e8;">α=0,33 &nbsp;|&nbsp; β=0,42 &nbsp;|&nbsp; γ=0,10 &nbsp;|&nbsp; δ=0,08 &nbsp;|&nbsp; θ=0,07 &nbsp;|&nbsp; α+β+γ+δ+θ = 1,00 (CRS)</div>
+    <div class="note">Nguồn dữ liệu: vietnam_macro_2020_2025.csv · GSO/NSO · MoST · MIC Việt Nam</div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('tfp')">① TFP &amp; Dự báo</button>
+    <button class="tab" onclick="showTab('growth')">② Phân rã tăng trưởng</button>
+    <button class="tab" onclick="showTab('scenario')">③ Kịch bản 2030</button>
+    <button class="tab" onclick="showTab('data')">④ Bảng dữ liệu</button>
+    <button class="tab" onclick="showTab('policy')">⑤ Thảo luận chính sách</button>
+  </div>
+
+  <!-- TAB 1: TFP -->
+  <div id="tab-tfp" class="panel active">
+    <p class="section-title">Câu 1.4.1 – 1.4.2 · Ước lượng TFP và so sánh dự báo</p>
+
+    <div class="grid-3" id="metric-cards-tfp"></div>
+
+    <div class="grid-2">
+      <div class="chart-card">
+        <h3>Năng suất nhân tố tổng hợp A<sub>t</sub> (TFP)</h3>
+        <p class="desc">Tính ngược từ hàm sản xuất: A<sub>t</sub> = Y / (K<sup>α</sup>·L<sup>β</sup>·D<sup>γ</sup>·AI<sup>δ</sup>·H<sup>θ</sup>)</p>
+        <div style="position:relative;height:240px">
+          <canvas id="chartTFP" role="img" aria-label="Biểu đồ TFP Việt Nam 2020-2025"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <h3>GDP thực tế vs. dự báo (Ŷ<sub>t</sub>)</h3>
+        <p class="desc">Dùng A̅ = trung bình TFP 2020–2025. MAPE = <span id="mape-val" style="color:var(--accent);font-weight:700"></span></p>
+        <div style="position:relative;height:240px">
+          <canvas id="chartGDPfit" role="img" aria-label="So sánh GDP thực tế và dự báo"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <h3>Đóng góp từng yếu tố vào GDP (tỷ trọng trong mô hình)</h3>
+      <p class="desc">Mỗi yếu tố được chuẩn hóa để so sánh: α·ln K, β·ln L, γ·ln D, δ·ln AI, θ·ln H</p>
+      <div style="position:relative;height:220px">
+        <canvas id="chartContrib" role="img" aria-label="Tỷ trọng đóng góp từng yếu tố"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 2: Growth decomp -->
+  <div id="tab-growth" class="panel">
+    <p class="section-title">Câu 1.4.3 · Phân rã tăng trưởng GDP bình quân 2020–2025</p>
+
+    <div class="chart-card">
+      <h3>Đóng góp bình quân hàng năm vào tăng trưởng GDP (%)</h3>
+      <p class="desc">Δln Y<sub>t</sub> = ΔlnA<sub>t</sub> + α·ΔlnK<sub>t</sub> + β·ΔlnL<sub>t</sub> + γ·ΔlnD<sub>t</sub> + δ·ΔlnAI<sub>t</sub> + θ·ΔlnH<sub>t</sub></p>
+      <div style="position:relative;height:280px">
+        <canvas id="chartDecomp" role="img" aria-label="Phân rã tăng trưởng GDP"></canvas>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="chart-card">
+        <h3>Tỷ trọng đóng góp (%)</h3>
+        <p class="desc">Phần đóng góp tương đối của mỗi yếu tố</p>
+        <div class="growth-bar-wrap" id="growthBars"></div>
+      </div>
+      <div class="chart-card">
+        <h3>Biểu đồ tròn – cơ cấu đóng góp</h3>
+        <p class="desc">Chỉ tính các thành phần dương</p>
+        <div style="position:relative;height:220px">
+          <canvas id="chartPie" role="img" aria-label="Cơ cấu đóng góp tăng trưởng GDP"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 3: Scenario 2030 -->
+  <div id="tab-scenario" class="panel">
+    <p class="section-title">Câu 1.4.4 · Mô phỏng kịch bản GDP năm 2030</p>
+
+    <div class="slider-group">
+      <div class="slider-row">
+        <span class="slider-label">D – Kinh tế số / GDP (%)</span>
+        <input type="range" min="15" max="40" step="0.5" value="30" id="sl_D" oninput="updateScenario()">
+        <span class="slider-val" id="vD">30%</span>
+      </div>
+      <div class="slider-row">
+        <span class="slider-label">AI – Doanh nghiệp số (nghìn)</span>
+        <input type="range" min="60" max="150" step="1" value="100" id="sl_AI" oninput="updateScenario()">
+        <span class="slider-val" id="vAI">100</span>
+      </div>
+      <div class="slider-row">
+        <span class="slider-label">H – Lao động qua đào tạo (%)</span>
+        <input type="range" min="25" max="50" step="0.5" value="35" id="sl_H" oninput="updateScenario()">
+        <span class="slider-val" id="vH">35%</span>
+      </div>
+      <div class="slider-row">
+        <span class="slider-label">K &amp; L tăng trưởng (%/năm)</span>
+        <input type="range" min="3" max="10" step="0.5" value="6" id="sl_KL" oninput="updateScenario()">
+        <span class="slider-val" id="vKL">6%</span>
+      </div>
+      <div class="slider-row">
+        <span class="slider-label">TFP tăng trưởng (%/năm)</span>
+        <input type="range" min="0" max="3" step="0.1" value="1.2" id="sl_TFP" oninput="updateScenario()">
+        <span class="slider-val" id="vTFP">1,2%</span>
+      </div>
+    </div>
+
+    <div class="result-box" id="resultBox">
+      <div style="font-size:13px;color:#185fa5;margin-bottom:4px;">Dự báo GDP Việt Nam năm 2030</div>
+      <div class="big" id="gdp2030">–</div>
+      <div class="context" id="gdp2030ctx"></div>
+    </div>
+
+    <div class="scenario-grid" id="scenarioCards"></div>
+
+    <div class="chart-card">
+      <h3>Quỹ đạo GDP dự báo 2025–2030</h3>
+      <p class="desc">Từ giá trị thực 2025 tới dự báo 2030 theo các kịch bản</p>
+      <div style="position:relative;height:260px">
+        <canvas id="chartScenario" role="img" aria-label="Quỹ đạo GDP dự báo 2025-2030"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 4: Data -->
+  <div id="tab-data" class="panel">
+    <p class="section-title">Bảng dữ liệu gốc &amp; ước lượng TFP</p>
+    <table class="data-table" id="mainTable">
+      <thead>
+        <tr>
+          <th>Năm</th>
+          <th>Y (GDP, ng.tỷ)</th>
+          <th>K (ng.tỷ)</th>
+          <th>L (tr. LĐ)</th>
+          <th>D (%)</th>
+          <th>AI (ng. DN)</th>
+          <th>H (%)</th>
+          <th>A<sub>t</sub> (TFP)</th>
+          <th>Ŷ (dự báo)</th>
+          <th>Sai số %</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+    <p style="font-size:12px;color:var(--muted);font-style:italic;">* K, L, D lấy từ file CSV. AI và H lấy từ dữ liệu bổ sung MoST/Bài 1.3. Ŷ dùng A̅ trung bình.</p>
+
+    <div class="chart-card" style="margin-top:20px">
+      <h3>Tương quan GDP thực tế &amp; dự báo</h3>
+      <div style="position:relative;height:220px">
+        <canvas id="chartScatter" role="img" aria-label="Scatter plot GDP thực tế vs dự báo"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 5: Policy -->
+  <div id="tab-policy" class="panel">
+    <p class="section-title">Câu 1.5 · Thảo luận chính sách</p>
+
+    <div class="policy-box">
+      <strong>a) Xu hướng TFP giai đoạn 2020–2025</strong>
+      <span id="policyA">Đang tính toán...</span>
+    </div>
+
+    <div class="policy-box">
+      <strong>b) Yếu tố đóng góp nhiều nhất trong D, AI, H</strong>
+      <span id="policyB">Đang tính toán...</span>
+    </div>
+
+    <div class="policy-box">
+      <strong>c) Mục tiêu 30% kinh tế số/GDP vào 2030</strong>
+      Theo mô phỏng kịch bản với D = 30%, cùng với K và L tăng 6%/năm và TFP tăng 1,2%/năm, GDP 2030 ước đạt <strong id="policyC_val">–</strong> nghìn tỷ VND, tương đương tăng trưởng bình quân <strong id="policyC_gr">–</strong>%/năm so với 2025. Mục tiêu 30% kinh tế số là khả thi nếu duy trì đầu tư liên tục vào hạ tầng số, AI và nhân lực; đồng thời cần ràng buộc: ngân sách chuyển đổi số ≥ 20% tổng đầu tư công, và năng lực hấp thụ công nghệ (H) phải tăng song hành với D để tránh lãng phí đầu tư.
+    </div>
+
+    <div class="chart-card">
+      <h3>So sánh kịch bản chính sách năm 2030</h3>
+      <p class="desc">Ba kịch bản: Cơ sở (D=19,5%), Trung gian (D=25%), Tham vọng (D=30%)</p>
+      <div style="position:relative;height:240px">
+        <canvas id="chartPolicy" role="img" aria-label="So sánh ba kịch bản chính sách 2030"></canvas>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const YEARS = [2020, 2021, 2022, 2023, 2024, 2025];
+const Y  = [8044.4, 8487.5, 9513.3, 10221.8, 11511.9, 12847.6];
+const K  = [16500, 17800, 19600, 21300, 23500, 25900];
+const L  = [53.6, 50.5, 51.7, 52.4, 52.9, 53.4];
+const D  = [12.0, 12.7, 14.3, 16.5, 18.3, 19.5];
+const AI = [55.6, 60.2, 65.4, 67.0, 73.8, 80.1];
+const H  = [24.1, 26.1, 26.2, 27.0, 28.4, 29.2];
+
+const alpha=0.33, beta=0.42, gamma=0.10, delta=0.08, theta=0.07;
+
+function cobbDouglas(A, k, l, d, ai, h) {
+  return A * Math.pow(k, alpha) * Math.pow(l, beta) * Math.pow(d, gamma) * Math.pow(ai, delta) * Math.pow(h, theta);
+}
+
+const A_t = YEARS.map((_, i) =>
+  Y[i] / (Math.pow(K[i],alpha)*Math.pow(L[i],beta)*Math.pow(D[i],gamma)*Math.pow(AI[i],delta)*Math.pow(H[i],theta))
+);
+const A_avg = A_t.reduce((s,v)=>s+v,0)/A_t.length;
+const Y_hat = YEARS.map((_,i) => cobbDouglas(A_avg, K[i], L[i], D[i], AI[i], H[i]));
+const MAPE = YEARS.reduce((s,_,i)=>s+Math.abs((Y[i]-Y_hat[i])/Y[i]),0)/YEARS.length*100;
+
+const colors = {
+  blue:'#185fa5', teal:'#0f6e56', amber:'#ba7517', coral:'#993c1d',
+  red:'#a32d2d', green:'#639922', purple:'#534ab7', gray:'#5f5e5a'
+};
+
+function showTab(id) {
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  event.target.classList.add('active');
+}
+
+function fmt(n,d=1){ return n.toFixed(d).replace('.',','); }
+function fmtInt(n){ return Math.round(n).toLocaleString('vi-VN'); }
+
+function buildTFPTab() {
+  const tfpTrend = A_t[A_t.length-1] > A_t[0] ? '↑ Tăng' : '↓ Giảm';
+  const tfpPct = (A_t[A_t.length-1]/A_t[0]-1)*100;
+  document.getElementById('mape-val').textContent = fmt(MAPE,2)+'%';
+
+  document.getElementById('metric-cards-tfp').innerHTML = `
+    <div class="metric">
+      <div class="label">A̅ (TFP trung bình)</div>
+      <div class="value">${fmt(A_avg,4)}</div>
+      <div class="sub">Bình quân 2020–2025</div>
+    </div>
+    <div class="metric">
+      <div class="label">MAPE – Sai số dự báo</div>
+      <div class="value">${fmt(MAPE,2)}%</div>
+      <div class="sub">${MAPE<3?'Rất tốt':'Chấp nhận được'}</div>
+    </div>
+    <div class="metric">
+      <div class="label">Xu hướng TFP</div>
+      <div class="value" style="font-size:18px">${tfpTrend}</div>
+      <div class="sub">${fmt(tfpPct,1)}% so với 2020</div>
+    </div>
+  `;
+
+  new Chart(document.getElementById('chartTFP'), {
+    type:'line',
+    data:{ labels: YEARS, datasets:[{
+      label:'TFP (A_t)',
+      data: A_t.map(v=>+v.toFixed(6)),
+      borderColor: colors.blue,
+      backgroundColor: '#e6f1fb',
+      tension:0.3, fill:true, pointRadius:5, pointHoverRadius:7,
+      borderWidth:2
+    }]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label: ctx=>'A_t = '+ctx.parsed.y.toFixed(6) }}},
+      scales:{
+        x:{ grid:{color:'#f0ede8'}, ticks:{font:{size:11}} },
+        y:{ grid:{color:'#f0ede8'}, ticks:{font:{size:11}, callback:v=>v.toFixed(4)} }
+      }
+    }
+  });
+
+  new Chart(document.getElementById('chartGDPfit'), {
+    type:'line',
+    data:{
+      labels: YEARS,
+      datasets:[
+        { label:'Y thực tế', data:Y, borderColor:colors.blue, borderWidth:2, tension:0.2, pointRadius:5 },
+        { label:'Ŷ dự báo', data:Y_hat.map(v=>+v.toFixed(1)), borderColor:colors.coral, borderWidth:2, borderDash:[5,4], tension:0.2, pointRadius:4 }
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{
+        display:true, position:'top',
+        labels:{font:{size:11}, boxWidth:12, usePointStyle:true}
+      }, tooltip:{ callbacks:{ label: ctx=>ctx.dataset.label+': '+fmtInt(ctx.parsed.y)+' ng.tỷ' }}},
+      scales:{
+        x:{ grid:{color:'#f0ede8'}, ticks:{font:{size:11}} },
+        y:{ grid:{color:'#f0ede8'}, ticks:{font:{size:11}, callback:v=>fmtInt(v)} }
+      }
+    }
+  });
+
+  const logK = YEARS.map((_,i)=> alpha*Math.log(K[i]));
+  const logL = YEARS.map((_,i)=> beta*Math.log(L[i]));
+  const logD = YEARS.map((_,i)=> gamma*Math.log(D[i]));
+  const logAI = YEARS.map((_,i)=> delta*Math.log(AI[i]));
+  const logH = YEARS.map((_,i)=> theta*Math.log(H[i]));
+
+  new Chart(document.getElementById('chartContrib'), {
+    type:'bar',
+    data:{
+      labels: YEARS,
+      datasets:[
+        {label:'α·ln K', data:logK.map(v=>+v.toFixed(3)), backgroundColor:'#185fa5'},
+        {label:'β·ln L', data:logL.map(v=>+v.toFixed(3)), backgroundColor:'#0f6e56'},
+        {label:'γ·ln D', data:logD.map(v=>+v.toFixed(3)), backgroundColor:'#ba7517'},
+        {label:'δ·ln AI',data:logAI.map(v=>+v.toFixed(3)), backgroundColor:'#993c1d'},
+        {label:'θ·ln H', data:logH.map(v=>+v.toFixed(3)), backgroundColor:'#534ab7'},
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ position:'top', labels:{font:{size:11},boxWidth:10,usePointStyle:true} }},
+      scales:{
+        x:{ stacked:false, grid:{color:'#f0ede8'}, ticks:{font:{size:11}} },
+        y:{ grid:{color:'#f0ede8'}, ticks:{font:{size:11}} }
+      }
+    }
+  });
+}
+
+function buildGrowthTab() {
+  const lnY = Y.map(v=>Math.log(v));
+  const lnK = K.map(v=>Math.log(v));
+  const lnL = L.map(v=>Math.log(v));
+  const lnD = D.map(v=>Math.log(v));
+  const lnAI= AI.map(v=>Math.log(v));
+  const lnH = H.map(v=>Math.log(v));
+  const lnA = A_t.map(v=>Math.log(v));
+
+  const n = YEARS.length-1;
+  const contK  = alpha*(lnK[n]-lnK[0])/n*100;
+  const contL  = beta*(lnL[n]-lnL[0])/n*100;
+  const contD  = gamma*(lnD[n]-lnD[0])/n*100;
+  const contAI = delta*(lnAI[n]-lnAI[0])/n*100;
+  const contH  = theta*(lnH[n]-lnH[0])/n*100;
+  const contA  = (lnA[n]-lnA[0])/n*100;
+  const totalG = (lnY[n]-lnY[0])/n*100;
+
+  const growthByYear = YEARS.slice(1).map((_,i)=>({
+    year: YEARS[i+1],
+    total: (lnY[i+1]-lnY[i])*100,
+    K: alpha*(lnK[i+1]-lnK[i])*100,
+    L: beta*(lnL[i+1]-lnL[i])*100,
+    D: gamma*(lnD[i+1]-lnD[i])*100,
+    AI:delta*(lnAI[i+1]-lnAI[i])*100,
+    H: theta*(lnH[i+1]-lnH[i])*100,
+    TFP:(lnA[i+1]-lnA[i])*100,
+  }));
+
+  new Chart(document.getElementById('chartDecomp'), {
+    type:'bar',
+    data:{
+      labels: growthByYear.map(r=>r.year),
+      datasets:[
+        {label:'K (vốn)', data:growthByYear.map(r=>+r.K.toFixed(3)), backgroundColor:colors.blue},
+        {label:'L (lao động)', data:growthByYear.map(r=>+r.L.toFixed(3)), backgroundColor:colors.teal},
+        {label:'D (số hóa)', data:growthByYear.map(r=>+r.D.toFixed(3)), backgroundColor:colors.amber},
+        {label:'AI', data:growthByYear.map(r=>+r.AI.toFixed(3)), backgroundColor:colors.coral},
+        {label:'H (nhân lực số)', data:growthByYear.map(r=>+r.H.toFixed(3)), backgroundColor:colors.purple},
+        {label:'TFP', data:growthByYear.map(r=>+r.TFP.toFixed(3)), backgroundColor:colors.green},
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ position:'top', labels:{font:{size:11},boxWidth:10,usePointStyle:true} },
+        tooltip:{ callbacks:{ label: ctx=>ctx.dataset.label+': '+ctx.parsed.y.toFixed(3)+'%' }}},
+      scales:{
+        x:{ stacked:true, grid:{color:'#f0ede8'}, ticks:{font:{size:11}} },
+        y:{ stacked:true, grid:{color:'#f0ede8'}, ticks:{font:{size:11}, callback:v=>v.toFixed(1)+'%'} }
+      }
+    }
+  });
+
+  const items = [
+    {label:'K (vốn)', val:contK, color:colors.blue},
+    {label:'L (lao động)', val:contL, color:colors.teal},
+    {label:'D (số hóa)', val:contD, color:colors.amber},
+    {label:'AI', val:contAI, color:colors.coral},
+    {label:'H (nhân lực)', val:contH, color:colors.purple},
+    {label:'TFP (A)', val:contA, color:colors.green},
+  ];
+  const total = totalG;
+  const bars = document.getElementById('growthBars');
+  bars.innerHTML = items.map(item=>{
+    const pct = (item.val/total*100);
+    const w = Math.max(0, Math.min(100, pct));
+    return `<div class="growth-row">
+      <span class="growth-label">${item.label}</span>
+      <div class="growth-bar-bg"><div class="growth-bar" style="width:${w}%;background:${item.color}"></div></div>
+      <span class="growth-pct">${fmt(item.val,2)}%</span>
+    </div>`;
+  }).join('');
+  bars.innerHTML += `<div style="font-size:12px;color:var(--muted);margin-top:8px;border-top:1px solid var(--border);padding-top:8px;">Tổng tăng trưởng bình quân: <strong>${fmt(total,2)}%/năm</strong></div>`;
+
+  const posItems = items.filter(i=>i.val>0);
+  new Chart(document.getElementById('chartPie'), {
+    type:'doughnut',
+    data:{
+      labels: posItems.map(i=>i.label),
+      datasets:[{
+        data: posItems.map(i=>+i.val.toFixed(3)),
+        backgroundColor: posItems.map(i=>i.color),
+        borderWidth:1, borderColor:'#fff'
+      }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{position:'right', labels:{font:{size:11},boxWidth:12,usePointStyle:true}},
+        tooltip:{ callbacks:{ label: ctx=>ctx.label+': '+ctx.parsed.toFixed(2)+'%' }}
+      }
+    }
+  });
+
+  const maxItem = items.reduce((a,b)=>Math.abs(a.val)>Math.abs(b.val)?a:b);
+  const policyA_el = document.getElementById('policyA');
+  const policyB_el = document.getElementById('policyB');
+  if(policyA_el) {
+    const trend = contA > 0 ? 'tăng' : 'giảm';
+    policyA_el.textContent = `TFP của Việt Nam có xu hướng ${trend} trong giai đoạn 2020–2025, với mức đóng góp bình quân ${fmt(contA,3)}%/năm vào tăng trưởng GDP. Điều này phản ánh chất lượng tăng trưởng ${contA>0?'đang cải thiện':'còn dựa nhiều vào tích lũy vốn hơn là hiệu quả kỹ thuật'}. Giai đoạn COVID-19 (2020–2021) tạo áp lực lớn lên TFP do gián đoạn sản xuất và chuỗi cung ứng.`;
+    policyB_el.textContent = `Trong ba yếu tố mới, ${maxItem.label} đóng góp nhiều nhất với ${fmt(maxItem.val,3)}%/năm. Đối với D (số hóa): ${fmt(contD,3)}%, AI: ${fmt(contAI,3)}%, H (nhân lực số): ${fmt(contH,3)}%. Kết quả này cho thấy đầu tư nhân lực số (H) có lợi suất cao do nền tảng lao động lớn của Việt Nam – chỉ cần tăng tỷ lệ đào tạo là cộng hưởng ngay vào sản lượng.`;
+  }
+}
+
+let scenarioChart = null;
+function updateScenario() {
+  const D30   = parseFloat(document.getElementById('sl_D').value);
+  const AI30  = parseFloat(document.getElementById('sl_AI').value);
+  const H30   = parseFloat(document.getElementById('sl_H').value);
+  const gKL   = parseFloat(document.getElementById('sl_KL').value)/100;
+  const gTFP  = parseFloat(document.getElementById('sl_TFP').value)/100;
+
+  document.getElementById('vD').textContent   = fmt(D30,1)+'%';
+  document.getElementById('vAI').textContent  = Math.round(AI30)+'';
+  document.getElementById('vH').textContent   = fmt(H30,1)+'%';
+  document.getElementById('vKL').textContent  = fmt(parseFloat(document.getElementById('sl_KL').value),1)+'%';
+  document.getElementById('vTFP').textContent = parseFloat(document.getElementById('sl_TFP').value).toFixed(1).replace('.',',')+' %';
+
+  const K25 = K[5], L25 = L[5], A25 = A_t[5];
+  const T = 5;
+  const K30 = K25 * Math.pow(1+gKL, T);
+  const L30 = L25 * Math.pow(1+gKL, T);
+  const A30 = A25 * Math.pow(1+gTFP, T);
+  const GDP30 = cobbDouglas(A30, K30, L30, D30, AI30, H30);
+  const CAGR  = (Math.pow(GDP30/Y[5], 1/T)-1)*100;
+
+  document.getElementById('gdp2030').textContent = fmtInt(Math.round(GDP30))+' nghìn tỷ VND';
+  document.getElementById('gdp2030ctx').textContent =
+    '≈ ' + fmt(GDP30/23.5, 0) + ' tỷ USD · Tăng trưởng bình quân ' + fmt(CAGR,2)+'%/năm (2025–2030)';
+
+  document.getElementById('scenarioCards').innerHTML = `
+    <div class="scenario-card"><div class="sc-label">K năm 2030 (ng.tỷ)</div><div class="sc-val">${fmtInt(Math.round(K30))}</div></div>
+    <div class="scenario-card"><div class="sc-label">L năm 2030 (tr. LĐ)</div><div class="sc-val">${fmt(L30,1)}</div></div>
+    <div class="scenario-card"><div class="sc-label">TFP A năm 2030</div><div class="sc-val">${A30.toFixed(5)}</div></div>
+    <div class="scenario-card"><div class="sc-label">CAGR 2025–2030</div><div class="sc-val">${fmt(CAGR,2)}%</div></div>
+  `;
+
+  const yearsProj = [2025,2026,2027,2028,2029,2030];
+  const dataProj = yearsProj.map((_,t)=>{
+    const k = K25*Math.pow(1+gKL,t), l = L25*Math.pow(1+gKL,t);
+    const d = D[5] + (D30-D[5])*(t/T);
+    const ai= AI[5]+ (AI30-AI[5])*(t/T);
+    const h = H[5] + (H30-H[5])*(t/T);
+    const a = A25*Math.pow(1+gTFP,t);
+    return +cobbDouglas(a,k,l,d,ai,h).toFixed(0);
+  });
+
+  if(scenarioChart) { scenarioChart.destroy(); }
+  scenarioChart = new Chart(document.getElementById('chartScenario'), {
+    type:'line',
+    data:{
+      labels: yearsProj,
+      datasets:[
+        { label:'Lịch sử', data:[...Y.slice(0,6).map(v=>+v.toFixed(0)), null], borderColor:colors.gray, borderWidth:1, borderDash:[3,3], pointRadius:3 },
+        { label:'Kịch bản mô phỏng', data:[Y[5], ...dataProj.slice(1)], borderColor:colors.blue, backgroundColor:'#e6f1fb55', fill:true, tension:0.3, borderWidth:2, pointRadius:5 },
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{position:'top', labels:{font:{size:11},boxWidth:12,usePointStyle:true}},
+        tooltip:{ callbacks:{ label: ctx=>ctx.dataset.label+': '+fmtInt(ctx.parsed.y)+' ng.tỷ' }}},
+      scales:{
+        x:{grid:{color:'#f0ede8'}, ticks:{font:{size:11}}},
+        y:{grid:{color:'#f0ede8'}, ticks:{font:{size:11}, callback:v=>fmtInt(v)}}
+      }
+    }
+  });
+
+  const pC = document.getElementById('policyC_val');
+  const pCg = document.getElementById('policyC_gr');
+  if(pC) {
+    const GDP30_base = cobbDouglas(A25*Math.pow(1.012,5), K25*Math.pow(1.06,5), L25*Math.pow(1.06,5), 30, 100, 35);
+    pC.textContent = fmtInt(Math.round(GDP30_base));
+    pCg.textContent = fmt((Math.pow(GDP30_base/Y[5],0.2)-1)*100,2);
+  }
+}
+
+function buildDataTab() {
+  const body = document.getElementById('tableBody');
+  const A_bar = A_avg;
+  body.innerHTML = YEARS.map((yr,i)=>{
+    const err = Math.abs((Y[i]-Y_hat[i])/Y[i]*100);
+    const errColor = err<2?'green':err<5?'amber':'red';
+    return `<tr>
+      <td>${yr}</td>
+      <td>${fmtInt(Y[i])}</td>
+      <td>${fmtInt(K[i])}</td>
+      <td>${fmt(L[i],1)}</td>
+      <td>${fmt(D[i],1)}</td>
+      <td>${fmt(AI[i],1)}</td>
+      <td>${fmt(H[i],1)}</td>
+      <td>${A_t[i].toFixed(6)}</td>
+      <td>${fmtInt(Math.round(Y_hat[i]))}</td>
+      <td><span class="badge ${errColor}">${fmt(err,2)}%</span></td>
+    </tr>`;
+  }).join('');
+
+  new Chart(document.getElementById('chartScatter'), {
+    type:'scatter',
+    data:{ datasets:[{
+      label:'Năm',
+      data: YEARS.map((_,i)=>({x:Y[i], y:Y_hat[i], year:YEARS[i]})),
+      backgroundColor:colors.blue,
+      pointRadius:7
+    }]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false},
+        tooltip:{ callbacks:{ label: ctx=>YEARS[ctx.dataIndex]+': Thực='+fmtInt(ctx.parsed.x)+' / Dự báo='+fmtInt(ctx.parsed.y) }}},
+      scales:{
+        x:{title:{display:true, text:'Y thực tế (ng.tỷ)', font:{size:11}}, grid:{color:'#f0ede8'}, ticks:{font:{size:11}, callback:v=>fmtInt(v)}},
+        y:{title:{display:true, text:'Ŷ dự báo (ng.tỷ)', font:{size:11}}, grid:{color:'#f0ede8'}, ticks:{font:{size:11}, callback:v=>fmtInt(v)}}
+      }
+    }
+  });
+}
+
+function buildPolicyChart() {
+  const scenarios = [
+    {label:'Cơ sở (D=19,5%)',   D:19.5, AI:85, H:30, color:colors.gray},
+    {label:'Trung gian (D=25%)', D:25, AI:92, H:32, color:colors.teal},
+    {label:'Tham vọng (D=30%)', D:30, AI:100, H:35, color:colors.blue},
+  ];
+  const T=5, A25=A_t[5], K25=K[5], L25=L[5];
+  const results = scenarios.map(s=>{
+    const k=K25*Math.pow(1.06,T), l=L25*Math.pow(1.06,T), a=A25*Math.pow(1.012,T);
+    return cobbDouglas(a,k,l,s.D,s.AI,s.H);
+  });
+  new Chart(document.getElementById('chartPolicy'), {
+    type:'bar',
+    data:{
+      labels: scenarios.map(s=>s.label),
+      datasets:[{
+        label:'GDP 2030 (ng.tỷ VND)',
+        data: results.map(v=>+v.toFixed(0)),
+        backgroundColor: scenarios.map(s=>s.color),
+        borderWidth:0
+      }]
+    },
+    options:{
+      indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false},
+        tooltip:{ callbacks:{ label: ctx=>fmtInt(ctx.parsed.x)+' ng.tỷ VND' }}},
+      scales:{
+        x:{grid:{color:'#f0ede8'}, ticks:{font:{size:11}, callback:v=>fmtInt(v)}},
+        y:{grid:{display:false}, ticks:{font:{size:12}}}
+      }
+    }
+  });
+}
+
+buildTFPTab();
+buildGrowthTab();
+buildDataTab();
+buildPolicyChart();
+updateScenario();
+</script>
+</body>
+</html>
